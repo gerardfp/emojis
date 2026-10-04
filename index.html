@@ -1,142 +1,543 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light" data-density="compact">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Emojis Oficiales Unicode — Copiar al Portapapeles</title>
-  <meta name="description" content="Lista oficial completa de emojis de Unicode organizada en rejillas compactas por categoría y listos para copiar con un clic.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
-  <link rel="stylesheet" href="css/styles.css">
+  <title>Emojis Oficiales Unicode</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-bg: #eff6ff;
+      --success: #16a34a;
+      --cell-size: 40px;
+      --cell-font: 1.5rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #090d16;
+        --card-bg: #111827;
+        --border: #1f2937;
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #3b82f6;
+        --accent-bg: #1e293b;
+        --success: #22c55e;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 60px;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #status {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Search & Nav */
+    .controls-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .search-input {
+      width: 100%;
+      max-width: 480px;
+      padding: 8px 14px;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      background: var(--card-bg);
+    }
+
+    .category-nav {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .category-nav::-webkit-scrollbar { display: none; }
+
+    .nav-btn {
+      padding: 4px 10px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      border-radius: 9999px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .nav-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .category-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      content-visibility: auto;
+      contain-intrinsic-size: 1px 300px;
+    }
+
+    .category-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .count-badge {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 2px 8px;
+      border-radius: 9999px;
+    }
+
+    .subcategory-group {
+      margin-bottom: 16px;
+    }
+
+    .subcategory-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    /* Compact Grid */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(var(--cell-size), 1fr));
+      gap: 6px;
+    }
+
+    .emoji-btn {
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--cell-font);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.1s ease, border-color 0.1s ease, background 0.1s ease;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    }
+
+    .emoji-btn:hover {
+      transform: scale(1.18);
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      z-index: 5;
+    }
+
+    .emoji-btn:active {
+      transform: scale(0.9);
+    }
+
+    .emoji-btn.copied {
+      background: #dcfce7 !important;
+      border-color: var(--success) !important;
+      animation: pop 0.3s ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.25); }
+      100% { transform: scale(1); }
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #0f172a;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s ease;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Top Sticky Header -->
-  <header class="app-header">
-    <div class="header-top">
-      <div class="brand-section">
-        <span class="brand-logo" role="img" aria-label="Logo">✨</span>
-        <div class="brand-info">
-          <h1 class="brand-title">
-            Emojis Oficiales
-            <span class="version-badge">Unicode 16.0</span>
-          </h1>
+  <header>
+    <div class="header-content">
+      <div class="top-bar">
+        <h1><span>😀</span> Emojis Oficiales Unicode</h1>
+        <div id="status">
+          <div class="spinner"></div>
+          <span>Descargando lista oficial desde unicode.org...</span>
         </div>
       </div>
-
-      <!-- Live Sync Status Pill -->
-      <div id="sync-status-pill" class="sync-pill syncing" title="Comprobando lista oficial en tiempo real...">
-        <span class="sync-spinner"></span>
-        <span class="sync-label">Sincronizando con Unicode.org...</span>
+      <div class="controls-bar">
+        <input type="text" id="search" class="search-input" placeholder="Buscar emojis por nombre o símbolo..." autocomplete="off">
       </div>
-
-      <!-- Controls: Density, Sound, Theme -->
-      <div class="header-controls">
-        <select id="density-selector" class="select-density" title="Tamaño de rejilla">
-          <option value="compact">Compacto</option>
-          <option value="medium">Normal</option>
-          <option value="large">Grande</option>
-        </select>
-
-        <button id="sound-toggle" class="icon-btn" title="Activar/Desactivar sonido al copiar" aria-label="Sonido al copiar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-          </svg>
-        </button>
-
-        <button id="theme-toggle" class="icon-btn" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-          </svg>
-        </button>
-      </div>
+      <nav id="category-nav" class="category-nav"></nav>
     </div>
-
-    <!-- Search Input Bar -->
-    <div class="search-container">
-      <div class="search-input-wrapper">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" id="search-input" class="search-input" placeholder="Buscar emojis por nombre, categoría o código (ej: smile, cat, corazón, 1F600)..." autocomplete="off" spellcheck="false">
-        <span class="search-shortcut">/</span>
-        <button id="clear-search" class="clear-search-btn" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">&times;</button>
-      </div>
-      <div id="results-count" class="results-stats">Cargando emojis...</div>
-    </div>
-
-    <!-- Category Nav Bar (Horizontal scrollable pills) -->
-    <nav class="category-nav-bar" aria-label="Categorías de emojis">
-      <div id="category-nav" class="category-nav-inner">
-        <!-- Injected via JavaScript -->
-      </div>
-    </nav>
   </header>
 
-  <!-- Main Content Area -->
-  <main class="app-main">
-    <!-- Pinned: Recently Copied -->
-    <section id="section-recents" class="pinned-section" style="display: none;">
-      <div class="pinned-header">
-        <h2 class="pinned-title">🕒 Copiados Recientemente</h2>
-        <button id="clear-recents" class="clear-btn-sm" onclick="app.saveStorage('emoji_recents', []); app.recents=[]; app.renderRecents(); app.renderCategoryNav();">Limpiar recientes</button>
-      </div>
-      <div id="recents-container" class="emoji-grid"></div>
-    </section>
-
-    <!-- Pinned: Favorites -->
-    <section id="section-favorites" class="pinned-section" style="display: none;">
-      <div class="pinned-header">
-        <h2 class="pinned-title">⭐ Favoritos</h2>
-        <button id="clear-favorites" class="clear-btn-sm" onclick="app.saveStorage('emoji_favorites', []); app.favorites.clear(); app.renderFavorites(); app.renderCategoryNav(); app.renderGrid();">Limpiar favoritos</button>
-      </div>
-      <div id="favorites-container" class="emoji-grid"></div>
-    </section>
-
-    <!-- Emojis Grid Container (Categorized) -->
-    <div id="grid-container">
-      <div class="empty-state">
-        <div class="sync-spinner" style="width: 32px; height: 32px; margin: 0 auto 16px auto;"></div>
-        <p>Cargando lista oficial de emojis desde Unicode.org...</p>
-      </div>
+  <main id="emoji-container">
+    <div class="empty-state">
+      <div class="spinner" style="width: 32px; height: 32px; margin: 0 auto 16px auto;"></div>
+      <p>Conectando con <strong>unicode.org</strong> para obtener los últimos emojis...</p>
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="app-footer">
-    <p>
-      Fuente de datos oficial: 
-      <a href="https://unicode.org/emoji/charts/full-emoji-list.html" target="_blank" rel="noopener noreferrer">
-        Unicode.org Full Emoji List
-      </a>
-      &bull; Listo para desplegar en GitHub Pages &bull; Haz clic en cualquier emoji para copiarlo.
-    </p>
-  </footer>
+  <div id="toast"></div>
 
-  <!-- Floating Toast Notification -->
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>
+    const UNICODE_URL = 'https://unicode.org/emoji/charts/full-emoji-list.html';
+    const PROXIES = [
+      url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+      url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+    ];
 
-  <!-- Custom Context Menu (Right Click) -->
-  <div id="context-menu" class="context-menu"></div>
+    let allEmojis = [];
+    let groupedEmojis = {};
+    const statusEl = document.getElementById('status');
+    const containerEl = document.getElementById('emoji-container');
+    const navEl = document.getElementById('category-nav');
+    const searchEl = document.getElementById('search');
+    const toastEl = document.getElementById('toast');
+    let toastTimer;
 
-  <!-- Sync Details Modal -->
-  <div id="sync-modal" class="modal-backdrop">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>Sincronización Oficial Unicode</h3>
-        <button id="close-modal-btn" class="modal-close-btn">&times;</button>
-      </div>
-      <div id="sync-modal-body" class="modal-body">
-        <!-- Injected via JavaScript -->
-      </div>
-      <div class="modal-footer">
-        <button id="manual-sync-btn" class="btn-primary">Forzar Sincronización Ahora</button>
-      </div>
-    </div>
-  </div>
+    function showToast(msg) {
+      toastEl.innerHTML = msg;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+    }
 
-  <!-- App Entry Point -->
-  <script type="module" src="js/app.js"></script>
+    async function copyToClipboard(emoji, name, btn) {
+      try {
+        await navigator.clipboard.writeText(emoji);
+      } catch {
+        const input = document.createElement('input');
+        input.value = emoji;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        input.remove();
+      }
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 400);
+      showToast(`¡Copiado! <strong>${emoji}</strong> <span style="opacity:0.8;font-size:0.85em;">${name}</span>`);
+    }
+
+    function decodeEntities(str) {
+      return str
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+        .replace(/&#([0-9]+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)));
+    }
+
+    function parseUnicodeHtml(html) {
+      const list = [];
+      let cat = 'Smileys & Emotion';
+      let sub = 'face-smiling';
+
+      const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
+      let match;
+
+      while ((match = trRegex.exec(html)) !== null) {
+        const row = match[1];
+
+        if (row.includes("class='bighead'") || row.includes('class="bighead"')) {
+          const m = /<th[^>]*class=['"][^'"]*bighead[^'"]*['"][^>]*><a[^>]*>([\s\S]*?)<\/a>/i.exec(row);
+          if (m) cat = decodeEntities(m[1].replace(/<[^>]+>/g, '')).trim();
+          continue;
+        }
+
+        if (row.includes("class='mediumhead'") || row.includes('class="mediumhead"')) {
+          const m = /<th[^>]*class=['"][^'"]*mediumhead[^'"]*['"][^>]*><a[^>]*>([\s\S]*?)<\/a>/i.exec(row);
+          if (m) sub = decodeEntities(m[1].replace(/<[^>]+>/g, '')).trim();
+          continue;
+        }
+
+        if (row.includes("class='chars'") || row.includes('class="chars"')) {
+          const charM = /<td class=['"]chars['"]>([\s\S]*?)<\/td>/i.exec(row);
+          const nameM = /<td class=['"]name['"]>([\s\S]*?)<\/td>/i.exec(row);
+          const codeM = /<td class=['"]code['"]>([\s\S]*?)<\/td>/i.exec(row);
+
+          if (charM && nameM) {
+            const emoji = decodeEntities(charM[1].replace(/<[^>]+>/g, '')).trim();
+            const name = decodeEntities(nameM[1].replace(/<[^>]+>/g, '')).trim();
+            const code = codeM ? decodeEntities(codeM[1].replace(/<[^>]+>/g, '')).trim() : '';
+            if (emoji && name) {
+              list.push({ e: emoji, name, code, cat, sub });
+            }
+          }
+        }
+      }
+      return list;
+    }
+
+    async function fetchUnicodeList() {
+      // 1. Try direct fetch
+      try {
+        const res = await fetch(UNICODE_URL);
+        if (res.ok) {
+          const html = await res.text();
+          const items = parseUnicodeHtml(html);
+          if (items.length > 500) return items;
+        }
+      } catch {}
+
+      // 2. Try CORS proxies
+      for (const proxy of PROXIES) {
+        try {
+          statusEl.innerHTML = `<div class="spinner"></div><span>Descargando desde unicode.org...</span>`;
+          const res = await fetch(proxy(UNICODE_URL));
+          if (res.ok) {
+            const html = await res.text();
+            const items = parseUnicodeHtml(html);
+            if (items.length > 500) return items;
+          }
+        } catch (e) {
+          console.warn('Proxy falló, probando siguiente...', e);
+        }
+      }
+      throw new Error('No se pudo descargar la lista de emojis.');
+    }
+
+    function renderNav() {
+      const cats = Object.keys(groupedEmojis);
+      navEl.innerHTML = cats.map(cat => {
+        const id = 'cat-' + cat.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const count = groupedEmojis[cat].length;
+        return `<a href="#${id}" class="nav-btn">${cat} (${count})</a>`;
+      }).join('');
+    }
+
+    function renderGrid(filtered = null) {
+      if (filtered) {
+        if (filtered.length === 0) {
+          containerEl.innerHTML = `<div class="empty-state"><p>No se encontraron emojis para esa búsqueda.</p></div>`;
+          return;
+        }
+        containerEl.innerHTML = `
+          <section class="category-section">
+            <div class="category-title">
+              <span>Resultados de búsqueda</span>
+              <span class="count-badge">${filtered.length}</span>
+            </div>
+            <div class="emoji-grid">
+              ${filtered.map(item => `
+                <button class="emoji-btn" data-e="${item.e}" data-name="${item.name}" title="${item.name} (${item.code})">
+                  ${item.e}
+                </button>
+              `).join('')}
+            </div>
+          </section>
+        `;
+        return;
+      }
+
+      const cats = Object.keys(groupedEmojis);
+      containerEl.innerHTML = cats.map(cat => {
+        const id = 'cat-' + cat.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const items = groupedEmojis[cat];
+        
+        // Group by subcategory
+        const subs = {};
+        for (const item of items) {
+          if (!subs[item.sub]) subs[item.sub] = [];
+          subs[item.sub].push(item);
+        }
+
+        return `
+          <section id="${id}" class="category-section">
+            <div class="category-title">
+              <span>${cat}</span>
+              <span class="count-badge">${items.length}</span>
+            </div>
+            ${Object.entries(subs).map(([subName, subItems]) => `
+              <div class="subcategory-group">
+                <div class="subcategory-title">${subName}</div>
+                <div class="emoji-grid">
+                  ${subItems.map(item => `
+                    <button class="emoji-btn" data-e="${item.e}" data-name="${item.name}" title="${item.name} (${item.code})">
+                      ${item.e}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </section>
+        `;
+      }).join('');
+    }
+
+    // Event listeners
+    containerEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.emoji-btn');
+      if (btn) {
+        const emoji = btn.getAttribute('data-e');
+        const name = btn.getAttribute('data-name');
+        copyToClipboard(emoji, name, btn);
+      }
+    });
+
+    searchEl.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (!q) {
+        renderGrid();
+        return;
+      }
+      const filtered = allEmojis.filter(x => 
+        x.name.toLowerCase().includes(q) || 
+        x.e.includes(q) || 
+        (x.code && x.code.toLowerCase().includes(q))
+      );
+      renderGrid(filtered);
+    });
+
+    // Start download on open
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const items = await fetchUnicodeList();
+        allEmojis = items;
+        groupedEmojis = {};
+        for (const item of items) {
+          if (!groupedEmojis[item.cat]) groupedEmojis[item.cat] = [];
+          groupedEmojis[item.cat].push(item);
+        }
+        statusEl.innerHTML = `<span style="color:var(--success);">✓ ${items.length.toLocaleString()} emojis listos</span>`;
+        renderNav();
+        renderGrid();
+      } catch (err) {
+        console.error(err);
+        statusEl.innerHTML = `<span style="color:#ef4444;">Error cargando emojis</span>`;
+        containerEl.innerHTML = `<div class="empty-state"><p>No se pudo descargar la lista de emojis. Comprueba tu conexión a internet y recarga la página.</p></div>`;
+      }
+    });
+  </script>
 </body>
 </html>
