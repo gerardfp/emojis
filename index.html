@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light" data-density="compact">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emojis Oficiales Unicode — Copiar al Portapapeles</title>
+  <meta name="description" content="Lista oficial completa de emojis de Unicode organizada en rejillas compactas por categoría y listos para copiar con un clic.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Top Sticky Header -->
+  <header class="app-header">
+    <div class="header-top">
+      <div class="brand-section">
+        <span class="brand-logo" role="img" aria-label="Logo">✨</span>
+        <div class="brand-info">
+          <h1 class="brand-title">
+            Emojis Oficiales
+            <span class="version-badge">Unicode 16.0</span>
+          </h1>
+        </div>
+      </div>
+
+      <!-- Live Sync Status Pill -->
+      <div id="sync-status-pill" class="sync-pill syncing" title="Comprobando lista oficial en tiempo real...">
+        <span class="sync-spinner"></span>
+        <span class="sync-label">Sincronizando con Unicode.org...</span>
+      </div>
+
+      <!-- Controls: Density, Sound, Theme -->
+      <div class="header-controls">
+        <select id="density-selector" class="select-density" title="Tamaño de rejilla">
+          <option value="compact">Compacto</option>
+          <option value="medium">Normal</option>
+          <option value="large">Grande</option>
+        </select>
+
+        <button id="sound-toggle" class="icon-btn" title="Activar/Desactivar sonido al copiar" aria-label="Sonido al copiar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+
+        <button id="theme-toggle" class="icon-btn" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Input Bar -->
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="search-input" class="search-input" placeholder="Buscar emojis por nombre, categoría o código (ej: smile, cat, corazón, 1F600)..." autocomplete="off" spellcheck="false">
+        <span class="search-shortcut">/</span>
+        <button id="clear-search" class="clear-search-btn" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">&times;</button>
+      </div>
+      <div id="results-count" class="results-stats">Cargando emojis...</div>
+    </div>
+
+    <!-- Category Nav Bar (Horizontal scrollable pills) -->
+    <nav class="category-nav-bar" aria-label="Categorías de emojis">
+      <div id="category-nav" class="category-nav-inner">
+        <!-- Injected via JavaScript -->
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="app-main">
+    <!-- Pinned: Recently Copied -->
+    <section id="section-recents" class="pinned-section" style="display: none;">
+      <div class="pinned-header">
+        <h2 class="pinned-title">🕒 Copiados Recientemente</h2>
+        <button id="clear-recents" class="clear-btn-sm" onclick="app.saveStorage('emoji_recents', []); app.recents=[]; app.renderRecents(); app.renderCategoryNav();">Limpiar recientes</button>
+      </div>
+      <div id="recents-container" class="emoji-grid"></div>
+    </section>
+
+    <!-- Pinned: Favorites -->
+    <section id="section-favorites" class="pinned-section" style="display: none;">
+      <div class="pinned-header">
+        <h2 class="pinned-title">⭐ Favoritos</h2>
+        <button id="clear-favorites" class="clear-btn-sm" onclick="app.saveStorage('emoji_favorites', []); app.favorites.clear(); app.renderFavorites(); app.renderCategoryNav(); app.renderGrid();">Limpiar favoritos</button>
+      </div>
+      <div id="favorites-container" class="emoji-grid"></div>
+    </section>
+
+    <!-- Emojis Grid Container (Categorized) -->
+    <div id="grid-container">
+      <div class="empty-state">
+        <div class="sync-spinner" style="width: 32px; height: 32px; margin: 0 auto 16px auto;"></div>
+        <p>Cargando lista oficial de emojis desde Unicode.org...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>
+      Fuente de datos oficial: 
+      <a href="https://unicode.org/emoji/charts/full-emoji-list.html" target="_blank" rel="noopener noreferrer">
+        Unicode.org Full Emoji List
+      </a>
+      &bull; Listo para desplegar en GitHub Pages &bull; Haz clic en cualquier emoji para copiarlo.
+    </p>
+  </footer>
+
+  <!-- Floating Toast Notification -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Custom Context Menu (Right Click) -->
+  <div id="context-menu" class="context-menu"></div>
+
+  <!-- Sync Details Modal -->
+  <div id="sync-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Sincronización Oficial Unicode</h3>
+        <button id="close-modal-btn" class="modal-close-btn">&times;</button>
+      </div>
+      <div id="sync-modal-body" class="modal-body">
+        <!-- Injected via JavaScript -->
+      </div>
+      <div class="modal-footer">
+        <button id="manual-sync-btn" class="btn-primary">Forzar Sincronización Ahora</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Entry Point -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
