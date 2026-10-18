@@ -54,6 +54,37 @@
       gap: 8px;
     }
 
+    .view-selector {
+      padding: 3px 24px 3px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      flex-shrink: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: all 0.12s ease;
+      font-family: inherit;
+    }
+
+    .view-selector:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background-color: var(--accent-bg);
+    }
+
+    .view-selector:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-bg);
+    }
+
     .category-nav {
       display: flex;
       gap: 4px;
@@ -165,6 +196,14 @@
       transform: scale(0.92);
     }
 
+    .emoji-btn img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      pointer-events: none;
+      vertical-align: middle;
+    }
+
     /* Breve animación de copiado */
     .emoji-btn.copied {
       background: #dcfce7 !important;
@@ -210,6 +249,10 @@
 
   <header>
     <div class="header-content">
+      <select id="view-selector" class="view-selector" aria-label="Selector unicode/github">
+        <option value="unicode" selected>Unicode</option>
+        <option value="github">GitHub</option>
+      </select>
       <nav id="category-nav" class="category-nav"></nav>
       <div id="status">
         <div class="spinner"></div>
@@ -223,6 +266,7 @@
 
   <script>
     const EMOJI_TEST_URL = 'https://www.unicode.org/Public/emoji/latest/emoji-test.txt';
+    const GITHUB_EMOJIS_URL = 'https://api.github.com/emojis';
     const PROXIES = [
       url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
       url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
@@ -235,7 +279,25 @@
     const containerEl = document.getElementById('emoji-container');
     const navEl = document.getElementById('category-nav');
     const toastEl = document.getElementById('toast');
+    const viewSelectorEl = document.getElementById('view-selector');
     let toastTimer;
+
+    let currentView = 'unicode';
+    let githubData = null;
+    try {
+      const cached = localStorage.getItem('github_emojis_cache');
+      if (cached) githubData = JSON.parse(cached);
+    } catch (e) {}
+    let loadingUnicode = true;
+    let loadingGithub = false;
+
+    function updateStatusSpinner() {
+      if (loadingUnicode || loadingGithub) {
+        statusEl.innerHTML = '<div class="spinner"></div>';
+      } else {
+        statusEl.innerHTML = '';
+      }
+    }
 
     function showToast(msg) {
       toastEl.innerHTML = msg;
@@ -283,6 +345,30 @@
           </section>
         `;
       }).join('');
+    }
+
+    function renderGitHubGrid() {
+      if (!githubData) {
+        containerEl.innerHTML = `
+          <div style="display:flex;justify-content:center;align-items:center;min-height:200px;color:var(--text-muted);gap:8px;">
+            <div class="spinner"></div>
+            <span>Cargando emojis...</span>
+          </div>
+        `;
+        return;
+      }
+      const entries = Object.entries(githubData);
+      containerEl.innerHTML = `
+        <section class="category-section">
+          <div class="emoji-grid">
+            ${entries.map(([name, url]) => `
+              <button class="emoji-btn" data-e=":${name}:" data-name="${name}" title=":${name}:">
+                <img src="${url}" alt=":${name}:" loading="lazy" decoding="async" width="24" height="24" draggable="false">
+              </button>
+            `).join('')}
+          </div>
+        </section>
+      `;
     }
 
     function parseEmojiTestTxt(text) {
@@ -354,15 +440,95 @@
         } catch (err) {}
       }
 
-      statusEl.innerHTML = '';
+      loadingUnicode = false;
+      updateStatusSpinner();
     }
 
     function applyUpdatedData(parsed) {
       groupedData = parsed;
-      renderNav();
-      renderGrid();
-      statusEl.innerHTML = '';
+      if (currentView === 'unicode') {
+        renderNav();
+        renderGrid();
+      }
+      loadingUnicode = false;
+      updateStatusSpinner();
     }
+
+    async function fetchGitHubEmojis() {
+      if (githubData || loadingGithub) return;
+      loadingGithub = true;
+      updateStatusSpinner();
+
+      // Intento directo
+      try {
+        const res = await fetch(GITHUB_EMOJIS_URL);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+            githubData = data;
+            try { localStorage.setItem('github_emojis_cache', JSON.stringify(data)); } catch (e) {}
+            loadingGithub = false;
+            updateStatusSpinner();
+            if (currentView === 'github') renderGitHubGrid();
+            return;
+          }
+        }
+      } catch (err) {}
+
+      // Intento mediante proxies CORS
+      for (const getProxyUrl of PROXIES) {
+        try {
+          const res = await fetch(getProxyUrl(GITHUB_EMOJIS_URL));
+          if (res.ok) {
+            const data = await res.json();
+            const json = (data && data.contents) ? JSON.parse(data.contents) : data;
+            if (json && typeof json === 'object' && Object.keys(json).length > 0) {
+              githubData = json;
+              try { localStorage.setItem('github_emojis_cache', JSON.stringify(json)); } catch (e) {}
+              loadingGithub = false;
+              updateStatusSpinner();
+              if (currentView === 'github') renderGitHubGrid();
+              return;
+            }
+          }
+        } catch (err) {}
+      }
+
+      loadingGithub = false;
+      updateStatusSpinner();
+      if (currentView === 'github' && !githubData) {
+        containerEl.innerHTML = `
+          <div style="text-align:center;padding:48px;color:var(--text-muted);">
+            <p>No se pudieron cargar los emojis de GitHub.</p>
+            <button onclick="fetchGitHubEmojis()" class="nav-btn" style="margin-top:12px;display:inline-block;">Reintentar</button>
+          </div>
+        `;
+      }
+    }
+
+    function switchView(view) {
+      if (view !== 'unicode' && view !== 'github') return;
+      currentView = view;
+      viewSelectorEl.value = view;
+      if (view === 'unicode') {
+        navEl.style.display = '';
+        renderNav();
+        renderGrid();
+      } else {
+        navEl.style.display = 'none';
+        if (githubData) {
+          renderGitHubGrid();
+        } else {
+          renderGitHubGrid();
+          fetchGitHubEmojis();
+        }
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    viewSelectorEl.addEventListener('change', (e) => {
+      switchView(e.target.value);
+    });
 
     // Click en emoji para copiar
     containerEl.addEventListener('click', (e) => {
@@ -377,6 +543,7 @@
     renderNav();
     renderGrid();
     fetchLatestEmojiTest();
+    fetchGitHubEmojis();
   </script>
 </body>
 </html>
